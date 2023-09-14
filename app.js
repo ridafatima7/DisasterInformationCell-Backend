@@ -15,7 +15,7 @@ const bodyParser = require('body-parser');
 // const TestRouter=require('./Routes/users_routes')
 // const CarRouter=require('./Routes/cars');
 const string='mongodb+srv://ridafatima:151214%40bar@cluster0.etq7ux9.mongodb.net/CrudOperations';
-mongoose.connect(string).then((result)=>app.listen(5000))
+mongoose.connect(string).then((result)=>app.listen(2000))
 .catch((error)=> console.log((error)));
 app.use(cors());
 const userSchema=new mongoose.Schema({
@@ -119,30 +119,33 @@ app.get('/getcarids', async (req, res) => {
     res.status(500).json({ indicator: 'error', message: 'Failed to fetch car IDs' });
   }
 });
-app.get('/getcar/:id', async (req, res) => {
+// app.get('/getcar/:id', async (req, res) => {
+//   try {
+//     const selectedCarId = req.params.id;
+//     const carData = await Cars.findOne({ Id: selectedCarId });
+//     if (!carData) {
+//       return res.status(404).json({ indicator: 'error', message: 'Car not found' });
+//     }
+//     res.status(200).json({ carData });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ indicator: 'error', message: 'Failed to fetch car data' });
+//   }
+// });
+app.delete('/deletecar', verifyToken, async (req, res) => {
+  const my_id = req.query.temp_id;
+ console.log(my_id)
   try {
-    const selectedCarId = req.params.id;
-    const carData = await Cars.findOne({ Id: selectedCarId });
-    if (!carData) {
-      return res.status(404).json({ indicator: 'error', message: 'Car not found' });
-    }
-    res.status(200).json({ carData });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ indicator: 'error', message: 'Failed to fetch car data' });
-  }
-});
-app.delete('/deletecar/:id', async (req, res) => {
-  try {
-    const carId = req.params.id;
-    const deletedCar = await Cars.findByIdAndDelete(carId);
+    const deletedCar = await Cars.findOneAndDelete({ _id: my_id });
 
     if (!deletedCar) {
-      return res.status(404).json({ indicator: 'error', message: 'Car not found' });
+      return res.status(404).json({ indicator: "error", message: "Car not found" });
     }
-    res.status(200).json({ indicator: 'success', message: 'Car deleted successfully' });
+
+    res.status(200).json({ indicator: "success", message: "Car deleted successfully" });
   } catch (error) {
-    res.status(500).json({ indicator: 'error', message: 'Failed to delete car' });
+    console.error(error);
+    res.status(500).json({ indicator: "error", message: "Failed to delete car" });
   }
 });
 
@@ -153,17 +156,57 @@ app.get('/getcar',async (req, res)=>{
   var response= await Cars.find();
   res.send(response);
 });
-app.get("/updatecars", async (req, res) => {
-  const my_id = req.query.id
-  const car = await Cars.findOneAndUpdate({breed: my_id}, {age: 23}, {new:true});
-  res.send(car);
+app.get('/getcar1',verifyToken,async (req, res)=>{
+  const carId =req.query.temp_id;
+  var response= await Cars.findOne({_id:carId});
+  res.send(response);
+});
+app.get('/findcar',verifyToken, async (req, res)=>{
+  try {
+    const carId =req.query.temp_id;
+    console.log(req.query.temp_id);
+    if (!carId) {
+      return res.status(400).json({ indicator: 'error', message: 'Car ID is missing in the request' });
+    }
+
+    const informationData = await Cars.findOne({ _id: carId });
+
+    if (!informationData) {
+      return res.status(404).json({ indicator: 'error', message: 'Car not found' });
+    }
+    res.send(informationData);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ indicator: 'error', message: 'Failed to retrieve car information' });
+  }
+});
+app.get("/updatecars", verifyToken, async (req, res) => {
+  try {
+    console.log(req.query.id);
+    const my_id = req.query.id;
+    console.log(req.query.car);
+    console.log(my_id);
+    const updatedCar = await Cars.findByIdAndUpdate(
+     (my_id),
+      {
+        Car: req.query.car,
+        Id: req.query.Id,
+        Price: req.query.Price,
+        Model: req.query.Model,
+        Color: req.query.Color,
+      },
+      { new: true }
+      );
+
+      if (!updatedCar) {
+        return res.status(404).json({ indicator: "error", message: "Car not found" });
+      }
   
-});
-   app.get("/deletecars", async (req, res) => {
-   const my_id = req.query.id
-   Cars.findOneAndDelete({breed: my_id},function (err, docs) {
-   res.send(docs);
-});
+      res.status(200).json({ indicator: "success", message: "Car updated successfully", updatedCar });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ indicator: "error", message: "Failed to update car" });
+    }
 });
 app.get('/Test', (req, res,next) => {
 

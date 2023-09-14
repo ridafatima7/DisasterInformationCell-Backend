@@ -51,9 +51,7 @@ async function validate(req,res,next)
           
 // }
 async function register(req,res)  {  
-  console.log(' testing'); 
-         
-          
+  console.log(' testing');
 }
 
 
